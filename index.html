@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Racers Notification Sender</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0f1a;color:#fff;font-family:system-ui,sans-serif;padding:16px 16px 40px;max-width:560px;margin:auto}
+h1{font-size:21px;margin:0 0 2px}
+.s{color:#8b93a7;font-size:13px;margin:0 0 14px}
+.card{background:#111729;border:1px solid #232c47;border-radius:14px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:13px;color:#aab2c5;margin:12px 0 6px}
+label:first-child{margin-top:0}
+input,textarea,select{width:100%;background:#151b2e;border:1px solid #2a3350;border-radius:10px;color:#fff;padding:12px;font-size:16px;font-family:inherit}
+textarea{min-height:84px;resize:vertical}
+.row{display:flex;gap:8px}
+.row input,.row select{flex:1}
+.b{border:0;border-radius:10px;padding:0 14px;font-size:14px;font-weight:600;color:#fff;background:#2a3350;white-space:nowrap;min-height:40px}
+.b:active{opacity:.7}
+.b:disabled{opacity:.5}
+.big{width:100%;margin-top:16px;padding:15px;border:0;border-radius:12px;background:#ff3b30;color:#fff;font-size:17px;font-weight:700}
+.big:disabled{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{background:#1b2440;border:1px solid #2a3350;color:#cfd6ea;border-radius:20px;padding:7px 12px;font-size:13px}
+.chip.em{font-size:18px;padding:4px 10px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:#cfd6ea}
+.chk input{width:auto}
+#out{margin-top:14px;font-size:14px;white-space:pre-wrap;line-height:1.5}
+.ok{color:#4cd964}.err{color:#ff6b6b}.mid{color:#ffcc00}
+a{color:#6ab0ff}
+details summary{font-weight:700;font-size:15px;cursor:pointer}
+ol{padding-left:20px;line-height:1.7;font-size:14px;color:#cfd6ea;margin:10px 0 0}
+.hint{font-size:12px;color:#8b93a7;margin-top:6px}
+.hint.ok{color:#4cd964}.hint.err{color:#ff6b6b}.hint.mid{color:#ffcc00}
+.hist{font-size:13px;color:#cfd6ea;margin:8px 0;border-bottom:1px solid #232c47;padding-bottom:8px}
+.hist .m{font-size:11px;color:#8b93a7;margin-bottom:2px}
+.hist .t{word-break:break-word}
+.hist .r{display:flex;gap:8px;margin-top:6px}
+.hist .b{min-height:32px;font-size:12px;padding:0 12px}
+.sec{font-size:15px;font-weight:700;margin:0 0 4px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.prev{background:#1e2538;border-radius:14px;padding:12px;margin-top:10px}
+.prev .ph{font-size:11px;color:#9aa3b8;margin-bottom:6px}
+.prev .ico{display:inline-block;width:16px;height:16px;border-radius:4px;background:#ff3b30;color:#fff;font-size:10px;text-align:center;line-height:16px;margin-right:4px;font-weight:700}
+.prev .pt{font-weight:700;font-size:14px;word-break:break-word}
+.prev .pb{font-size:13px;color:#d3d9e8;margin-top:2px;word-break:break-word;white-space:pre-wrap}
+.prev img{display:none;width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-top:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal[hidden]{display:none}
+.mbox{background:#111729;border:1px solid #2a3350;border-radius:14px;padding:16px;max-width:420px;width:100%}
+#mtxt{white-space:pre-wrap;font-size:15px;line-height:1.5;margin-bottom:14px;word-break:break-word}
+.hide{display:none}
+</style></head><body>
+
+<h1>Send notification to players</h1>
+<p class="s">Goes to phones that opened the new APK.</p>
+
+<div class="card">
+<details>
+<summary>How to use / setup (tap)</summary>
+<ol>
+<li>Make a token (log in as <b>Anshifyshop</b>):<br>
+<a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens/new" style="word-break:break-all">https://github.com/settings/personal-access-tokens/new</a>
+<div class="row" style="margin-top:6px"><button class="b" id="opentok" style="flex:1">Open token page</button><button class="b" id="copytok" style="flex:1">Copy link</button></div></li>
+<li><b>Repository access</b> → Only select repositories → <b>racers-push</b>.</li>
+<li><b>Permissions</b> → Repository → Add permissions → <b>Actions: Read and write</b>.</li>
+<li>Tap Generate token, copy it, then tap <b>Paste</b> below. It is saved on this phone.</li>
+<li>Tap <b>Test token</b>. Green = ready.</li>
+<li>Write title + message. Tap <b>Send test to me</b> first, then <b>Send</b>.</li>
+</ol>
+<p class="hint">Needs the newest <a target="_blank" href="https://github.com/Anshifyshop/racers-push/blob/main/.github/workflows/send-notification.yml">send-notification.yml</a> in your repo. Never share your token.<br>
+Your UID: Firebase → Database → <b>fcmTokens</b> → the key above your token.<br>
+Links: <a target="_blank" href="https://github.com/Anshifyshop/racers-push/actions">Actions</a> ·
+<a target="_blank" href="https://console.firebase.google.com/project/the-real-racers-project/messaging">Firebase Messaging</a> ·
+<a target="_blank" href="https://console.firebase.google.com/project/the-real-racers-project/database">Database</a></p>
+</details>
+</div>
+
+<div class="card">
+<label>GitHub token (saved only on this phone)</label>
+<div class="row">
+<input id="pat" type="password" placeholder="github_pat_..." autocomplete="off">
+<button class="b" id="paste" style="flex:0 0 auto">Paste</button>
+</div>
+<div class="row" style="margin-top:8px">
+<button class="b" id="show" style="flex:1">Show / hide</button>
+<button class="b" id="test" style="flex:1">Test token</button>
+<button class="b" id="clr" style="flex:1;background:#4a2430">Forget</button>
+</div>
+<div id="tmsg" class="hint"></div>
+</div>
+
+<div class="card">
+<div class="top"><div class="sec">Message</div>
+<div><button class="b" id="tsave" style="min-height:32px;font-size:12px">+ Save as template</button>
+<button class="b" id="tedit" style="min-height:32px;font-size:12px">Edit</button></div></div>
+<div class="chips" id="chips"></div>
+
+<label>Title</label>
+<input id="title" value="COME AND PLAY" maxlength="60">
+
+<label>Message</label>
+<textarea id="body" maxlength="200">Your friends are online, come and play!</textarea>
+<div class="hint" id="cnt"></div>
+<div class="hint">Tip: write {name} to put each player's name in the message.</div>
+<div class="chips" id="emo"></div>
+
+<label>Link (optional)</label>
+<input id="link" type="url" placeholder="https://...">
+<label class="chk"><input type="checkbox" id="addlink" checked> Add the link at the end of the message text</label>
+
+<label>Image URL (optional, shows a big picture)</label>
+<input id="image" type="url" placeholder="https://.../banner.jpg">
+
+<div class="prev">
+<div class="ph"><span class="ico">R</span>The Real Racers · now</div>
+<div class="pt" id="pt"></div>
+<div class="pb" id="pb"></div>
+<img id="pimg" alt="">
+</div>
+</div>
+
+<div class="card">
+<div class="sec">Who and when</div>
+
+<label>Send to</label>
+<select id="aud">
+<option value="all">Everyone</option>
+<option value="inactive">Players who stopped playing</option>
+<option value="new">New players</option>
+<option value="single">One player (UID)</option>
+</select>
+
+<div id="daysbox" class="hide">
+<label id="dayslbl">Days</label>
+<input id="days" type="number" min="1" max="365" value="3">
+</div>
+<div id="uidbox" class="hide">
+<label>Player UID</label>
+<input id="tuid" placeholder="player UID" autocomplete="off">
+</div>
+
+<label>Topic (optional, only players who opted in)</label>
+<input id="topic" placeholder="e.g. events" autocomplete="off">
+
+<div class="row" style="margin-top:12px">
+<div style="flex:1"><label style="margin-top:0">Priority</label>
+<select id="prio"><option value="high">High (right away)</option><option value="normal">Normal (saves battery)</option></select></div>
+<div style="flex:1"><label style="margin-top:0">Drop if offline for</label>
+<select id="ttl"><option value="1">1 hour</option><option value="6">6 hours</option><option value="24" selected>1 day</option><option value="72">3 days</option><option value="0">Default (long)</option></select></div>
+</div>
+
+<label>Send later (optional, up to 5 hours ahead)</label>
+<div class="row">
+<input id="when" type="datetime-local">
+<button class="b" id="whenclr" style="flex:0 0 auto">Clear</button>
+</div>
+
+<label>My own UID (for test sends, saved on this phone)</label>
+<input id="myuid" placeholder="your player UID" autocomplete="off">
+
+<div class="row" style="margin-top:14px">
+<button class="b" id="check" style="flex:1">Count players</button>
+<button class="b" id="testsend" style="flex:1">Send test to me</button>
+</div>
+<button class="big" id="go">Send to everyone</button>
+<div id="out"></div>
+</div>
+
+<div class="card">
+<div class="top"><div class="sec">Recently sent</div><button class="b" id="hclr" style="min-height:32px;font-size:12px">Clear</button></div>
+<div id="hist" class="hint">Nothing yet.</div>
+<button class="b hide" id="hmore" style="margin-top:8px;width:100%"></button>
+</div>
+
+<div class="modal" id="modal" hidden><div class="mbox">
+<div id="mtxt"></div>
+<div class="row"><button class="b" id="mno">Cancel</button><button class="b" id="myes" style="background:#ff3b30">Send</button></div>
+</div></div>
+
+<script>
+var OWNER="Anshifyshop", REPO="racers-push", FILE="send-notification.yml";
+var API="https://api.github.com/repos/"+OWNER+"/"+REPO;
+var $=function(i){return document.getElementById(i)};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function jget(k,d){try{var x=ls(k);return x?JSON.parse(x):d}catch(e){return d}}
+function jset(k,v){ls(k,JSON.stringify(v))}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
+function hdr(p){return {"Authorization":"Bearer "+p,"Accept":"application/vnd.github+json"}}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function explain(st){
+  if(st===401)return "401: token is wrong or expired. Make a new one.";
+  if(st===403)return "403: token has no permission. Set Actions = Read and write for racers-push.";
+  if(st===404)return "404: send-notification.yml is missing in the repo, or the token cannot see racers-push.";
+  if(st===422)return "422: the workflow rejected the input. Make sure you pasted the newest send-notification.yml into the repo.";
+  return "Error "+st;
+}
+
+// ---------- token ----------
+function expiryNote(r){
+  try{
+    var h=r.headers.get("github-authentication-token-expiration"); if(!h)return null;
+    var d=Date.parse(h.replace(" UTC","Z").replace(" ","T")); if(isNaN(d))return null;
+    var days=Math.ceil((d-Date.now())/86400000);
+    if(days<=0)return {cls:"err",text:"Token has expired. Make a new one."};
+    if(days<=7)return {cls:"mid",text:"Token expires in "+days+" day(s). Make a new one soon."};
+    return {cls:"ok",text:"Token valid for "+days+" more days."};
+  }catch(e){return null}
+}
+$("pat").value=ls("rr_pat")||"";
+$("pat").addEventListener("input",function(){ls("rr_pat",$("pat").value.trim())});
+$("pat").addEventListener("focus",function(){this.select()});
+$("paste").onclick=async function(){
+  try{var t=await navigator.clipboard.readText();$("pat").value=t.trim();ls("rr_pat",t.trim());$("tmsg").className="hint";$("tmsg").textContent="Pasted and saved.";}
+  catch(e){$("pat").type="text";$("pat").focus();$("tmsg").textContent="Long-press the box and choose Paste.";}
+};
+$("show").onclick=function(){$("pat").type=$("pat").type==="password"?"text":"password"};
+$("clr").onclick=function(){$("pat").value="";ls("rr_pat",null);$("tmsg").className="hint";$("tmsg").textContent="Token removed from this phone."};
+async function checkToken(quiet){
+  var p=$("pat").value.trim(); var m=$("tmsg");
+  if(!p){if(!quiet){m.className="hint err";m.textContent="Paste your token first."}return}
+  if(!quiet){m.className="hint";m.textContent="Checking..."}
+  try{
+    var r=await fetch(API+"/actions/workflows/"+FILE,{headers:hdr(p)});
+    var ex=expiryNote(r);
+    if(r.ok){
+      if(!quiet){m.className="hint ok";m.textContent="Token works. Ready to send."+(ex?" "+ex.text:"");if(ex&&ex.cls!=="ok")m.className="hint "+ex.cls}
+      else if(ex&&ex.cls!=="ok"){m.className="hint "+ex.cls;m.textContent=ex.text}
+    }else if(!quiet){m.className="hint err";m.textContent=explain(r.status)}
+    else if(r.status===401){m.className="hint err";m.textContent="Token is wrong or expired. Make a new one."}
+  }catch(e){if(!quiet){m.className="hint err";m.textContent="No internet or blocked: "+e.message}}
+}
+$("test").onclick=function(){checkToken(false)};
+var TOKEN_URL="https://github.com/settings/personal-access-tokens/new";
+$("opentok").onclick=function(){window.location.href=TOKEN_URL};
+$("copytok").onclick=async function(){
+  try{await navigator.clipboard.writeText(TOKEN_URL);$("tmsg").className="hint ok";$("tmsg").textContent="Link copied. Paste it in Chrome."}
+  catch(e){$("tmsg").className="hint";$("tmsg").textContent="Copy this: "+TOKEN_URL}
+};
+
+checkToken(true);
+
+// ---------- templates ----------
+var DEF=[
+ ["COME AND PLAY","Your friends are online, come and play!"],
+ ["NEW UPDATE","New update is live. Open the game and race now!"],
+ ["RACE NOW","A new race is waiting for you. Beat your friends!"],
+ ["DAILY REWARD","Your daily reward is ready. Collect it now!"]
+];
+var tpls=jget("rr_tpl",null)||DEF, editT=false;
+function drawTpl(){
+  $("chips").textContent="";
+  tpls.forEach(function(q,i){
+    var c=el("button","chip",q[0]+(editT?"  ✕":""));
+    c.onclick=function(){
+      if(editT){tpls.splice(i,1);jset("rr_tpl",tpls);drawTpl()}
+      else{$("title").value=q[0];$("body").value=q[1];refresh()}
+    };
+    $("chips").appendChild(c);
+  });
+  $("tedit").textContent=editT?"Done":"Edit";
+}
+$("tedit").onclick=function(){editT=!editT;drawTpl()};
+$("tsave").onclick=function(){
+  var t=$("title").value.trim(),b=$("body").value.trim();
+  if(!t||!b){say("err","Write a title and message first, then save it.");return}
+  tpls.push([t,b]);jset("rr_tpl",tpls);drawTpl();say("ok","Template saved.");
+};
+drawTpl();
+
+// ---------- emoji ----------
+var lastF=$("body");
+["title","body"].forEach(function(i){$(i).addEventListener("focus",function(){lastF=$(i)})});
+["🏎️","🏁","🔥","⚡","🏆","🎁","🎮","💥","🚀","⏰"].forEach(function(e){
+  var b=el("button","chip em",e);b.type="button";
+  b.onclick=function(){
+    var f=lastF,s=f.selectionStart==null?f.value.length:f.selectionStart,en=f.selectionEnd==null?s:f.selectionEnd;
+    f.value=f.value.slice(0,s)+e+f.value.slice(en);f.focus();
+    try{f.setSelectionRange(s+e.length,s+e.length)}catch(x){}
+    refresh();
+  };
+  $("emo").appendChild(b);
+});
+
+// ---------- preview + counter ----------
+var lastImg="";
+function refresh(){
+  $("cnt").textContent=$("body").value.length+"/200 characters";
+  $("pt").textContent=($("title").value||"Title").replace(/\{name\}/gi,"Racer");
+  var link=$("link").value.trim(), b=$("body").value||"Message";
+  if(link&&$("addlink").checked)b+=" "+link;
+  $("pb").textContent=b.replace(/\{name\}/gi,"Racer");
+  var im=$("image").value.trim(), p=$("pimg");
+  if(im!==lastImg){
+    lastImg=im;
+    if(/^https?:\/\//i.test(im)){p.onload=function(){p.style.display="block"};p.onerror=function(){p.style.display="none"};p.src=im}
+    else{p.style.display="none";p.removeAttribute("src")}
+  }
+}
+["title","body","link","image"].forEach(function(i){$(i).addEventListener("input",refresh)});
+$("addlink").addEventListener("change",refresh);
+refresh();
+
+// ---------- audience / schedule fields ----------
+$("myuid").value=ls("rr_myuid")||"";
+function audUI(){
+  var a=$("aud").value;
+  $("daysbox").className=(a==="inactive"||a==="new")?"":"hide";
+  $("uidbox").className=a==="single"?"":"hide";
+  $("dayslbl").textContent=a==="inactive"?"Not played for more than (days)":"Joined within the last (days)";
+  if(a==="inactive"&&$("days").value==="")$("days").value=3;
+  updateGo();
+}
+function updateGo(){
+  var a=$("aud").value;
+  var t=a==="all"?"everyone":a==="inactive"?"inactive players":a==="new"?"new players":"one player";
+  $("go").textContent=($("when").value?"Schedule for ":"Send to ")+t;
+}
+$("aud").addEventListener("change",audUI);
+$("when").addEventListener("change",updateGo);
+$("whenclr").onclick=function(){$("when").value="";updateGo()};
+audUI();
+
+// ---------- helpers ----------
+function say(cls,text){var o=$("out");o.className=cls;o.textContent=text;return o}
+function audLabel(o){
+  var s=o.target==="all"?"everyone":o.target==="inactive"?"inactive "+o.days+"+ days":o.target==="new"?"new (last "+o.days+" days)":"UID "+o.uid;
+  if(o.topic)s+=" · topic "+o.topic;
+  return s;
+}
+function cntKey(o){return [o.target,o.days,o.uid,o.topic].join("|")}
+function setBusy(b){["go","check","testsend"].forEach(function(i){$(i).disabled=b})}
+function getOpts(){
+  var link=$("link").value.trim(), raw=$("body").value.trim();
+  return {
+    title:$("title").value.trim(), raw:raw,
+    body:(link&&$("addlink").checked)?(raw+" "+link):raw,
+    link:link, image:$("image").value.trim(),
+    target:$("aud").value, days:Number($("days").value)||3,
+    uid:$("tuid").value.trim(), topic:$("topic").value.trim(),
+    priority:$("prio").value, ttl:$("ttl").value
+  };
+}
+function validate(o,needText){
+  if(needText&&(!o.title||!o.raw))return "Fill title and message.";
+  if(o.link&&!/^https?:\/\//i.test(o.link))return "Link must start with https://";
+  if(o.image&&!/^https?:\/\//i.test(o.image))return "Image URL must start with https://";
+  if(o.target==="single"&&!o.uid)return "Enter the player UID.";
+  return "";
+}
+function ask(text,yes){
+  return new Promise(function(res){
+    $("mtxt").textContent=text;$("myes").textContent=yes||"Send";$("modal").hidden=false;
+    function done(v){$("modal").hidden=true;$("myes").onclick=null;$("mno").onclick=null;res(v)}
+    $("myes").onclick=function(){done(true)};
+    $("mno").onclick=function(){done(false)};
+  });
+}
+
+// ---------- history ----------
+var showAll=false;
+function addHist(o,kind){
+  var h=jget("rr_hist2",[]);
+  h.unshift({t:new Date().toLocaleString(),kind:kind,o:o});
+  jset("rr_hist2",h.slice(0,30));drawHist();
+}
+function drawHist(){
+  var h=jget("rr_hist2",[]), box=$("hist");
+  box.textContent="";
+  if(!h.length){box.textContent="Nothing yet.";$("hmore").className="b hide";return}
+  var n=showAll?h.length:Math.min(8,h.length);
+  for(var i=0;i<n;i++)(function(x){
+    var d=el("div","hist");
+    d.appendChild(el("div","m",x.t+" · "+x.kind+" · "+audLabel(x.o)));
+    d.appendChild(el("div","t",x.o.title+": "+x.o.body));
+    var r=el("div","r");
+    var re=el("button","b","Reuse");
+    re.onclick=function(){
+      var o=x.o;
+      $("title").value=o.title.replace(/^\[TEST\] /,"");$("body").value=o.raw||o.body;$("link").value=o.link||"";$("image").value=o.image||"";
+      $("aud").value=o.target==="single"&&x.kind==="test"?"all":o.target;$("days").value=o.days||3;$("tuid").value=o.uid||"";$("topic").value=o.topic||"";
+      $("prio").value=o.priority||"high";$("ttl").value=o.ttl||"24";
+      refresh();audUI();window.scrollTo({top:0,behavior:"smooth"});
+    };
+    var rs=el("button","b","Resend");
+    rs.onclick=function(){
+      var o=Object.assign({},x.o);
+      if(x.kind==="test"){o.title=o.title.replace(/^\[TEST\] /,"");}
+      act("resend",o);
+    };
+    r.appendChild(re);r.appendChild(rs);d.appendChild(r);box.appendChild(d);
+  })(h[i]);
+  if(h.length>8){$("hmore").className="b";$("hmore").textContent=showAll?"Show less":"Show all ("+h.length+")"}
+  else $("hmore").className="b hide";
+}
+$("hmore").onclick=function(){showAll=!showAll;drawHist()};
+$("hclr").onclick=async function(){if(await ask("Clear the sent history on this phone?","Clear")){ls("rr_hist2",null);drawHist()}};
+drawHist();
+
+// ---------- results ----------
+function actionsLink(url,text){var a=el("a","",text||"See GitHub run");a.target="_blank";a.href=url;return a}
+async function readParts(run,pat){
+  try{
+    var r=await fetch(API+"/actions/runs/"+run.id+"/jobs",{headers:hdr(pat)});
+    var j=await r.json();
+    var steps=(j.jobs&&j.jobs[0]&&j.jobs[0].steps)||[];
+    var s=steps.find(function(x){return /^RESULT/.test(x.name)});
+    if(!s)return null;
+    var t=s.name.replace(/^RESULT\s*/,"");
+    if(t.indexOf("error=")===0)return {error:t.slice(6)};
+    var p={};
+    t.split(";").forEach(function(kv){var i=kv.indexOf("=");if(i>0)p[kv.slice(0,i).trim()]=kv.slice(i+1).trim()});
+    return p.targeted===undefined?null:p;
+  }catch(e){return null}
+}
+function showResult(run,parts,o){
+  var out=$("out"),text,cls;
+  if(parts&&parts.error){cls="err";text="Failed: "+parts.error}
+  else if(run.conclusion!=="success"){cls="err";text="Run "+run.conclusion+"."}
+  else if(!parts){cls="ok";text="Done. GitHub run finished OK."}
+  else if(parts.dry==="1"){
+    cls=Number(parts.targeted)?"ok":"mid";
+    text="Audience: "+parts.targeted+" player(s) (of "+parts.total+" with a token).";
+  }else{
+    var bad=Number(parts.failed)||0;
+    if(!Number(parts.targeted)){cls="mid";text="Nobody matched this audience, nothing was sent."}
+    else{
+      cls=bad?"mid":"ok";
+      text="Sent! "+parts.sent+" delivered"+(bad?", "+bad+" failed":"")+(Number(parts.removed)?" ("+parts.removed+" dead token(s) removed)":"")+".\nAudience "+parts.targeted+" of "+parts.total+" players.";
+    }
+  }
+  if(parts&&Number(parts.skipped))text+="\n"+parts.skipped+" player(s) skipped: no activity data saved for them yet (the game must save lastSeen / createdAt).";
+  out.className=cls;out.textContent=text;
+  out.appendChild(document.createElement("br"));
+  out.appendChild(actionsLink(run.html_url));
+  if(parts&&parts.targeted!==undefined&&o){var c=jget("rr_cnt",{});c[cntKey(o)]=Number(parts.targeted);jset("rr_cnt",c)}
+}
+async function waitResult(tag,pat,o){
+  for(var i=0;i<45;i++){
+    await sleep(i<2?3000:5000);
+    try{
+      var q=await fetch(API+"/actions/workflows/"+FILE+"/runs?per_page=10&event=workflow_dispatch",{headers:hdr(pat)});
+      var j=await q.json();
+      var run=(j.workflow_runs||[]).find(function(x){return (x.display_title||x.name||"").indexOf(tag)>=0});
+      if(run){
+        if(run.status==="completed"){var parts=await readParts(run,pat);showResult(run,parts,o);return true}
+        say("mid","Working... ("+run.status+")");
+      }
+    }catch(e){}
+  }
+  return false;
+}
+
+// ---------- main action ----------
+async function dispatch(o,mode,pat){
+  var tag=Math.random().toString(36).slice(2,8);
+  var inputs={
+    title:o.title||"check", body:o.body||"check", link:o.link||"", image:o.image||"",
+    target:o.target, uid:o.uid||"", topic:o.topic||"",
+    inactive_days:String(o.target==="inactive"?o.days:3), new_days:String(o.target==="new"?o.days:2),
+    priority:o.priority||"high", ttl_hours:String(o.ttl||"24"),
+    delay_minutes:String(mode.delay||0), dry_run:mode.dry?"true":"false", tag:tag
+  };
+  var r=await fetch(API+"/actions/workflows/"+FILE+"/dispatches",{
+    method:"POST",
+    headers:Object.assign({"Content-Type":"application/json"},hdr(pat)),
+    body:JSON.stringify({ref:"main",inputs:inputs})
+  });
+  if(r.status!==204)throw new Error(explain(r.status)+"\n"+(await r.text()));
+  return tag;
+}
+async function act(kind,stored){
+  var pat=$("pat").value.trim();
+  if(!pat){say("err","Paste your token first.");return}
+  var o=stored?Object.assign({},stored):getOpts();
+  var err=stored?"":validate(o,kind!=="check");
+  if(err){say("err",err);return}
+  var mode={dry:false,delay:0}, when="";
+  if(kind==="check"){mode.dry=true}
+  if(kind==="test"){
+    var my=$("myuid").value.trim();
+    if(!my){say("err","Type your own player UID in 'My own UID' first.");return}
+    ls("rr_myuid",my);
+    o.target="single";o.uid=my;o.topic="";o.title="[TEST] "+o.title;
+  }
+  if(kind==="send"){
+    var w=$("when").value;
+    if(w){
+      var mins=Math.ceil((new Date(w).getTime()-Date.now())/60000);
+      if(isNaN(mins)||mins<1){say("err","Pick a time in the future.");return}
+      if(mins>330){say("err","Too far ahead. The most is 5 hours 30 minutes.");return}
+      mode.delay=mins;when=new Date(w).toLocaleString();
+    }
+  }
+  if(kind==="send"||kind==="resend"){
+    var known=jget("rr_cnt",{})[cntKey(o)];
+    var txt=(when?"Schedule for "+when+" to ":"Send now to ")+audLabel(o)+"?"+(known!==undefined?"\n("+known+" players last time)":"")+"\n\n"+o.title+"\n"+o.body;
+    if(!(await ask(txt,when?"Schedule":"Send")))return;
+  }
+  ls("rr_pat",pat);
+  setBusy(true);
+  say("mid",mode.dry?"Counting players...":"Sending...");
+  try{
+    var tag=await dispatch(o,mode,pat);
+    if(mode.delay){
+      addHist(o,"scheduled "+when);
+      var out=say("ok","Scheduled for "+when+". GitHub will send it, you can close this page.");
+      out.appendChild(document.createElement("br"));
+      out.appendChild(actionsLink("https://github.com/"+OWNER+"/"+REPO+"/actions","Open Actions"));
+      return;
+    }
+    if(!mode.dry)addHist(o,kind==="test"?"test":kind==="resend"?"resent":"sent");
+    say("mid","Started. Waiting for GitHub...");
+    var done=await waitResult(tag,pat,o);
+    if(!done){
+      var out2=say("mid","Started, but it is taking long. Check progress: ");
+      out2.appendChild(actionsLink("https://github.com/"+OWNER+"/"+REPO+"/actions","Actions"));
+    }
+  }catch(e){say("err","Error: "+e.message)}
+  finally{setBusy(false)}
+}
+$("go").onclick=function(){act("send")};
+$("testsend").onclick=function(){act("test")};
+$("check").onclick=function(){act("check")};
+</script></body></html>
